@@ -11,9 +11,9 @@
 constexpr uint8_t MAX_LINE_LENGTH = 7;  // random guess
 constexpr uint16_t SEGMENT_DURATION_MS = 5_sec;
 constexpr uint32_t RUNTIME_DURATION_MS = 1_min;
-constexpr double SWIPE_TIME_MS = 1000.0 * 8 / 240;  // captured with camera
-constexpr double WAIT_TIME_MS = 1000.0 * 15 / 240;  // captured with camera
-constexpr double SCANLINE_TIME = 1000.0 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + 1);
+constexpr double SWIPE_TIME_MS = static_cast<double>(1_sec) * 8 / 240;  // captured with camera
+constexpr double WAIT_TIME_MS = static_cast<double>(1_sec) * 15 / 240;  // captured with camera
+constexpr double SCANLINE_TIME_US = 1000 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + 1);
 
 // constexpr char message[] = "Lorem ipsum, dolor sit amet...";
 constexpr char message[] = "Kamila\njest\nsuper!\n{} {} {}";
@@ -42,10 +42,10 @@ void setup() {
 }
 
 void loop() {
-    uint8_t currentSegment = 0;
     auto currentTime = clock();
     auto startTime = currentTime;
     auto segmentStartTime = currentTime;
+    uint8_t currentSegment = 0;
 
     while (currentTime - startTime < RUNTIME_DURATION_MS) {
         currentTime = clock();
@@ -55,12 +55,12 @@ void loop() {
 
             for (auto sl : glyph.gsl) {
                 PORTA = sl;
-                _delay_us(SCANLINE_TIME);
+                _delay_us(SCANLINE_TIME_US);
             }
 
             PORTA = 0;
             if (glyph.type != GLYPH_TYPE::COMPOUND) {
-                _delay_us(SCANLINE_TIME);
+                _delay_us(SCANLINE_TIME_US);
             }
 
             if (glyph.type == GLYPH_TYPE::NEWLINE) {

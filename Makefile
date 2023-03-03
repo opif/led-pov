@@ -3,7 +3,7 @@ dMCU=attiny24
 F_CPU=1000000
 CC=avr-g++
 OBJCOPY=avr-objcopy
-CFLAGS=-std=c++14 -Wall -g -Os -mmcu=${MCU} -DF_CPU=${F_CPU}
+CFLAGS=-std=c++14 -Wall -g -Os -mmcu=${MCU} -DF_CPU=${F_CPU} --param=min-pagesize=0
 TARGET=main
 SRCS=main.cpp src/*.cpp
 HEADERS=src/*.h
