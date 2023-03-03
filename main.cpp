@@ -1,17 +1,25 @@
-#include <util/delay.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
-#include "src/font.h"
-#include "src/adc.h"
+#include <util/delay.h>
 
-const int swipeTimeMs = 100;
+#include "src/adc.h"
+#include "src/clock.h"
+#include "src/font.h"
+#include "src/util.h"
+
+// constexpr int SWIPE_TIME_MS = 100; // calculated
+constexpr uint8_t MAX_LINE_LENGTH = 7;  // random guess
+constexpr uint16_t SEGMENT_DURATION_MS = 5_sec;
+constexpr uint32_t RUNTIME_DURATION_MS = 1_min;
+constexpr double SWIPE_TIME_MS = 1000.0 * 8 / 240;  // captured with camera
+constexpr double WAIT_TIME_MS = 1000.0 * 15 / 240;  // captured with camera
+constexpr double SCANLINE_TIME = 1000.0 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + 1);
 
 // constexpr char message[] = "Lorem ipsum, dolor sit amet...";
-constexpr char message[] = "Kamila \njest super!";
+constexpr char message[] = "Kamila\njest\nsuper!\n{} {} {}";
 const auto displayText PROGMEM = CharacterGlyph<message>();
 
-void setup()
-{
+void setup() {
     // cli(); // not required because default SREG value is 0;
 
     // WDTCR = _BV(WDCE);
@@ -28,39 +36,63 @@ void setup()
     PORTB = 0;
 
     adc_disable();
+    clock_reset();
 
     sei();
 }
 
-int i = 0; // todo: get rid of me
+void loop() {
+    uint8_t currentSegment = 0;
+    auto currentTime = clock();
+    auto startTime = currentTime;
+    auto segmentStartTime = currentTime;
 
-void loop()
-{
-    for (auto a : displayText.data)
-    {
-        i += *a.gsl;
+    while (currentTime - startTime < RUNTIME_DURATION_MS) {
+        currentTime = clock();
+
+        for (auto i = currentSegment; i < util::array_size(displayText.data); i++) {
+            auto glyph = displayText.data[i];
+
+            for (auto sl : glyph.gsl) {
+                PORTA = sl;
+                _delay_us(SCANLINE_TIME);
+            }
+
+            PORTA = 0;
+            if (glyph.type != GLYPH_TYPE::COMPOUND) {
+                _delay_us(SCANLINE_TIME);
+            }
+
+            if (glyph.type == GLYPH_TYPE::NEWLINE) {
+                if (currentTime - segmentStartTime >= SEGMENT_DURATION_MS) {
+                    currentSegment = i + 1;
+                    segmentStartTime = currentTime;
+
+                    if (currentSegment >= sizeof(displayText.data)) {
+                        currentSegment = 0;
+                    }
+                }
+
+                break;
+            }
+        }
+        _delay_ms(WAIT_TIME_MS);
     }
 }
 
-void disable_clocks()
-{
-    PRR |= _BV(PRTIM0) | _BV(PRTIM1) | _BV(PRUSI) | _BV(PRADC);
-}
+void disable_clocks() { PRR |= _BV(PRTIM0) | _BV(PRTIM1) | _BV(PRUSI) | _BV(PRADC); }
 
-void halt()
-{
+void halt() {
     adc_disable();
     disable_clocks();
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_mode();
 }
 
-int main(void)
-{
+int main(void) {
     setup();
 
-    for (;;)
-    {
+    for (;;) {
         loop();
         halt();
     }
