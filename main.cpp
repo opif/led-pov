@@ -2,15 +2,16 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include "src/font.h"
-
+#include "src/adc.h"
 
 const int swipeTimeMs = 100;
 
 // constexpr char message[] = "Lorem ipsum, dolor sit amet...";
-constexpr char message[] = "KAMILA JEST SUPER";
+constexpr char message[] = "Kamila \njest super!";
 const auto displayText PROGMEM = CharacterGlyph<message>();
 
-void setup() {
+void setup()
+{
     // cli(); // not required because default SREG value is 0;
 
     // WDTCR = _BV(WDCE);
@@ -26,22 +27,41 @@ void setup() {
     DDRB = 0xFF;
     PORTB = 0;
 
+    adc_disable();
+
     sei();
 }
 
-int i = 0; //todo: get rid of me
+int i = 0; // todo: get rid of me
 
-void loop() {
-    for (auto a: displayText.data) {
+void loop()
+{
+    for (auto a : displayText.data)
+    {
         i += *a.gsl;
     }
 }
 
-int main(void) {
+void disable_clocks()
+{
+    PRR |= _BV(PRTIM0) | _BV(PRTIM1) | _BV(PRUSI) | _BV(PRADC);
+}
+
+void halt()
+{
+    adc_disable();
+    disable_clocks();
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_mode();
+}
+
+int main(void)
+{
     setup();
 
-    for (;;) {
+    for (;;)
+    {
         loop();
-        sleep_mode();
+        halt();
     }
 }
