@@ -8,7 +8,7 @@ TARGET=main
 SRCS=main.cpp src/*.cpp
 HEADERS=src/*.h
 SIZE=avr-size -C
-AVR_PROGRAMMER=avrdude -c stk5000v2
+AVRDUDE=avrdude -c stk5000v2 -b 19200 -P /dev/ttyACM0
 
 
 all: ${TARGET}.hex
@@ -24,10 +24,10 @@ ${TARGET}.hex: ${TARGET}.bin
 	${OBJCOPY} -j .text -j .data -O ihex $? "$@"
 
 flash: ${TARGET}.hex
-	${AVR_PROGRAMMER} -p ${dMCU} -U flash:w:${TARGET}.hex:i -P usb
+	${AVRDUDE} -p ${dMCU} -U flash:w:${TARGET}.hex:i
 
 fuse:
-	${AVR_PROGRAMMER} -p ${dMCU} -U lfuse:w:0x62:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m -U lock:w:0xFF:m -P usb
+	${AVRDUDE} -p ${dMCU} -U lfuse:w:0x62:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m -U lock:w:0xFF:m
 
 clean:
 	rm -f *.bin *.hex *.s

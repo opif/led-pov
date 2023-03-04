@@ -1,16 +1,17 @@
-#include <avr/interrupt.h>
 #include "clock.h"
 
-static volatile uint32_t ms = 0;
-static const uint16_t ms_per_tick = 1000ul + 185ul; // korekta zegara
+#include <avr/interrupt.h>
 
-ISR(WDT_vect)
-{
+static volatile uint32_t ms = 0;
+constexpr uint16_t ms_per_tick = 16ul;
+
+ISR(WDT_vect) {
+    WDTCSR |= _BV(WDIE);
+
     ms += ms_per_tick;
 }
 
-uint32_t clock()
-{
+uint32_t clock() {
     uint32_t tmp;
     uint8_t tSREG = SREG;
 
@@ -21,8 +22,7 @@ uint32_t clock()
     return tmp;
 }
 
-void clock_reset()
-{
+void clock_reset() {
     uint8_t tSREG = SREG;
 
     cli();
