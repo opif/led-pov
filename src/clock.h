@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+void clock_setup();
+void clock_disable();
 void clock_reset();
 uint32_t clock();
 

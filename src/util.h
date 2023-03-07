@@ -11,12 +11,13 @@ constexpr uint8_t array_size(T (&)[N]) {
 template <typename T>
 constexpr T reverse_bits(T input) {
     T reverse = 0;
+    uint8_t i = 0;
 
-    for (uint8_t i = 0; i < sizeof(T) * 8; i++) {
-        reverse |= (input & 1);
+    do {
         reverse <<= 1;
+        reverse |= input & 1;
         input >>= 1;
-    }
+    } while (++i < 7);
 
     return reverse;
 }

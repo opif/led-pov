@@ -3,7 +3,7 @@ dMCU=attiny24
 F_CPU=1000000
 CC=avr-g++
 OBJCOPY=avr-objcopy
-CFLAGS=-std=c++14 -Wall -g -Os -mmcu=${MCU} -DF_CPU=${F_CPU} --param=min-pagesize=0
+CFLAGS=-std=c++17 -Wall -Og -mmcu=${MCU} -DF_CPU=${F_CPU} --param=min-pagesize=0
 TARGET=main
 SRCS=main.cpp src/*.cpp
 HEADERS=src/*.h
@@ -27,7 +27,7 @@ flash: ${TARGET}.hex
 	${AVRDUDE} -p ${dMCU} -U flash:w:${TARGET}.hex:i
 
 fuse:
-	${AVRDUDE} -p ${dMCU} -U lfuse:w:0x62:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m -U lock:w:0xFF:m
+	${AVRDUDE} -p ${dMCU} -U lfuse:w:0x62:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m
 
 clean:
 	rm -f *.bin *.hex *.s

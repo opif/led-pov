@@ -1,7 +1,6 @@
 #pragma once
 
 #include <assert.h>
-#include <avr/pgmspace.h>
 #include <stdint.h>
 
 #include "util.h"
@@ -22,7 +21,7 @@ typedef struct {
 constexpr uint8_t MIN_CHARACTER = '!';
 constexpr uint8_t MAX_CHARACTER = '~';
 constexpr uint8_t charCount = (MAX_CHARACTER - MIN_CHARACTER) + 1;
-constexpr FONT_GLYPH packedFont[charCount] PROGMEM = {
+constexpr FONT_GLYPH packedFont[charCount] = {
     {0, 0, 125, 0, 0},      {80, 96, 0, 80, 96},   {20, 127, 20, 127, 20},  {18, 42, 127, 42, 36},
     {0, 0, 0, 0, 0},        {0, 0, 0, 0, 0},       {0, 80, 96, 0, 0},       {0, 28, 34, 65, 0},
     {0, 65, 34, 28, 0},     {20, 8, 62, 8, 20},    {8, 8, 62, 8, 8},        {0, 5, 6, 0, 0},

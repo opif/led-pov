@@ -1,4 +1,5 @@
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <avr/sleep.h>
 #include <util/delay.h>
 
@@ -7,23 +8,21 @@
 #include "src/font.h"
 #include "src/util.h"
 
-// constexpr int SWIPE_TIME_MS = 100; // calculated
 constexpr uint8_t MAX_LINE_LENGTH = 7;  // random guess
-constexpr uint16_t SEGMENT_DURATION_MS = 5_sec;
+constexpr uint16_t SEGMENT_DURATION_MS = 10_sec;
 constexpr uint32_t RUNTIME_DURATION_MS = 1_min;
 constexpr double SWIPE_TIME_MS = static_cast<double>(1_sec) * 8 / 240;  // captured with camera
 constexpr double WAIT_TIME_MS = static_cast<double>(1_sec) * 15 / 240;  // captured with camera
-constexpr double SCANLINE_TIME_US = 1000 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + 1);
+constexpr double SCANLINE_TIME_US = 1000.0 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + 1);
+constexpr double SCANLINE_MAIN_TIME_US = SCANLINE_TIME_US * 3 / 4;
+constexpr double SCANLINE_SPACING_TIME_US = SCANLINE_TIME_US - SCANLINE_MAIN_TIME_US;
 
 // constexpr char message[] = "Lorem ipsum, dolor sit amet...";
-constexpr char message[] = "Kamila\njest\nsuper!\n{} {} {}";
-const auto displayText PROGMEM = CharacterGlyph<message>();
+constexpr char message[] = "Kamila\njest\nkochana\n{} {} {}";
+constexpr auto displayText PROGMEM = CharacterGlyph<message>();
 
 void setup() {
     // cli(); // not required because default SREG value is 0;
-
-    WDTCSR = _BV(WDCE) | _BV(WDE);
-    WDTCSR = _BV(WDE) | _BV(WDIE);
 
     DDRA = 0xFF;
     PORTA = 0;
@@ -31,7 +30,7 @@ void setup() {
     PORTB = 0;
 
     adc_disable();
-    clock_reset();
+    clock_setup();
 
     sei();
 }
@@ -43,14 +42,16 @@ void loop() {
     uint8_t currentSegment = 0;
 
     while (currentTime - startTime < RUNTIME_DURATION_MS) {
+        GLYPH_SCANLINES glyph;
         currentTime = clock();
 
         for (auto i = currentSegment; i < util::array_size(displayText.data); i++) {
-            auto glyph = displayText.data[i];
+            memcpy_P(&glyph, &(displayText.data[i]), sizeof(glyph));
 
             for (auto sl : glyph.gsl) {
                 PORTA = sl;
                 _delay_us(SCANLINE_TIME_US);
+                PORTA = 0;
             }
 
             PORTA = 0;
@@ -63,7 +64,7 @@ void loop() {
                     currentSegment = i + 1;
                     segmentStartTime = currentTime;
 
-                    if (currentSegment >= sizeof(displayText.data)) {
+                    if (currentSegment >= util::array_size(displayText.data)) {
                         currentSegment = 0;
                     }
                 }
@@ -75,11 +76,14 @@ void loop() {
     }
 }
 
-void disable_clocks() { PRR |= _BV(PRTIM0) | _BV(PRTIM1) | _BV(PRUSI) | _BV(PRADC); }
+void disable_avr_clocks() { PRR |= _BV(PRTIM0) | _BV(PRTIM1) | _BV(PRUSI) | _BV(PRADC); }
 
 void halt() {
+    cli();
+
     adc_disable();
-    disable_clocks();
+    clock_disable();
+    disable_avr_clocks();
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_mode();
 }
