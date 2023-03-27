@@ -13,9 +13,11 @@ constexpr uint16_t SEGMENT_DURATION_MS = 10_sec;
 constexpr uint32_t RUNTIME_DURATION_MS = 1_min;
 constexpr double SWIPE_TIME_MS = static_cast<double>(1_sec) * 8 / 240;  // captured with camera
 constexpr double WAIT_TIME_MS = static_cast<double>(1_sec) * 15 / 240;  // captured with camera
-constexpr double SCANLINE_TIME_US = 1000.0 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + 1);
-constexpr double SCANLINE_MAIN_TIME_US = SCANLINE_TIME_US * 3 / 4;
-constexpr double SCANLINE_SPACING_TIME_US = SCANLINE_TIME_US - SCANLINE_MAIN_TIME_US;
+// constexpr double SWIPE_TIME_MS = 28;  // measured with oscilloscope
+// constexpr double WAIT_TIME_MS = 65.5;   // measured with oscilloscope
+constexpr double GLYPH_SPACING = 2;  // measured with oscilloscope
+constexpr double SCANLINE_TIME_US = 1000.0 * SWIPE_TIME_MS / MAX_LINE_LENGTH / (GLYPH_WIDTH + GLYPH_SPACING);
+constexpr double GLYPH_SPACING_TIME_US = GLYPH_SPACING * SCANLINE_TIME_US;
 
 // constexpr char message[] = "Lorem ipsum, dolor sit amet...";
 constexpr char message[] = "Kamila\njest\nkochana\n{} {} {}";
@@ -51,12 +53,11 @@ void loop() {
             for (auto sl : glyph.gsl) {
                 PORTA = sl;
                 _delay_us(SCANLINE_TIME_US);
-                PORTA = 0;
             }
 
             PORTA = 0;
             if (glyph.type != GLYPH_TYPE::COMPOUND) {
-                _delay_us(SCANLINE_TIME_US);
+                _delay_us(GLYPH_SPACING_TIME_US);
             }
 
             if (glyph.type == GLYPH_TYPE::NEWLINE) {
