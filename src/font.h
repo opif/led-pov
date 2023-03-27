@@ -68,12 +68,6 @@ constexpr void decodeScanlines(uint8_t ch, GLYPH_SCANLINES &out) {
 constexpr bool getGlyphScanlines(char in, GLYPH_SCANLINES &out) {
     if (!isInBounds(in)) {
         switch (in) {
-            case '{':
-            case '}':
-                decodeScanlines(in, out);
-                out.type = GLYPH_TYPE::COMPOUND;
-
-                break;
             case ' ':
                 out.gsl[0] = 0;
                 out.gsl[1] = 0;
@@ -98,6 +92,11 @@ constexpr bool getGlyphScanlines(char in, GLYPH_SCANLINES &out) {
     }
 
     decodeScanlines(in, out);
+
+    if (in == '{') {
+        // special case for heart icon
+        out.type = GLYPH_TYPE::COMPOUND;
+    }
 
     return true;
 }
